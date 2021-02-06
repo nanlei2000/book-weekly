@@ -8,3 +8,8 @@ edition = "2018"
 
 [dependencies]
 job_scheduler = "*"
+ureq = { version = "*", features = ["json"] }
+scraper = "0.12.0"
+lettre = "0.9"
+lettre_email = "0.9"
+regex = "*"
