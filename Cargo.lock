@@ -96,6 +96,9 @@ dependencies = [
  "lettre_email",
  "regex",
  "scraper",
+ "serde",
+ "serde_derive",
+ "serde_json",
  "ureq",
 ]
 

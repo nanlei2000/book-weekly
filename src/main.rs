@@ -2,6 +2,10 @@ extern crate job_scheduler;
 extern crate lettre;
 extern crate lettre_email;
 extern crate scraper;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
 use job_scheduler::{Job, JobScheduler};
 use lettre::smtp::authentication::{Credentials, Mechanism};
 use lettre::smtp::extension::ClientId;
@@ -10,11 +14,12 @@ use lettre::{SmtpClient, Transport};
 use lettre_email::EmailBuilder;
 use regex::Regex;
 use scraper::{Html, Selector};
+use std::fs::File;
 use std::time::Duration;
 
 const NEW_BOOK_URL: &str = "https://book.douban.com/latest?icn=index-latestbook-all";
 
-fn fetch_book_html() -> std::string::String {
+fn fetch_book_html() -> String {
   let agent = ureq::Agent::new();
   let resp = agent
     .get(NEW_BOOK_URL)
@@ -28,9 +33,9 @@ fn fetch_book_html() -> std::string::String {
   return html;
 }
 
-fn clean_html(html: &str) -> std::string::String {
+fn clean_html(html: &str) -> String {
   let document = Html::parse_document(html);
-  let mut mail_html = "<html>".to_owned();
+  let mut mail_html: String = "<html>".to_owned();
   mail_html += "<h1>虚构类</h1><hr/>";
   let mut selector = Selector::parse("#content > div > div.article > ul").unwrap();
   for element in document.select(&selector) {
@@ -44,19 +49,17 @@ fn clean_html(html: &str) -> std::string::String {
   mail_html += "</html>";
   return mail_html;
 }
-// TODO: use this regexp <a class="cover"[^*]+?<\/a>
-fn remove_img_tag(html: String) -> std::string::String {
+// TODO: use this regexp: <a class="cover"[^*]+?<\/a>
+fn remove_img_tag(html: String) -> String {
   let re = Regex::new(r"<img").unwrap();
   let result = re.replace_all(&html, "<disableimg").to_owned().to_string();
   return result;
 }
 
-fn send_mail(html: &str) {
+fn send_mail(html: &str, config: MailConfig) {
   let email = EmailBuilder::new()
-    // Addresses can be specified by the tuple (email, alias)
-    .to(("1456958184@qq.com", "一周新书推荐"))
-    // ... or by an address only
-    .from(("1456958184@qq.com", "rust client"))
+    .to((config.to.clone(), "一周新书推荐"))
+    .from((config.to.clone(), "rust client"))
     .subject("一周新书推荐")
     .html(html)
     .build()
@@ -68,10 +71,7 @@ fn send_mail(html: &str) {
     // Set the name sent during EHLO/HELO, default is `localhost`
     .hello_name(ClientId::Domain("smtp.qq.com".to_string()))
     // Add credentials for authentication
-    .credentials(Credentials::new(
-      "1456958184@qq.com".to_string(),
-      "yeualimouwtiided".to_string(),
-    ))
+    .credentials(Credentials::new(config.auth.user, config.auth.pass))
     // Enable SMTPUTF8 if the server supports it
     .smtp_utf8(true)
     // Configure expected authentication mechanism
@@ -80,8 +80,8 @@ fn send_mail(html: &str) {
     .connection_reuse(ConnectionReuseParameters::NoReuse)
     .transport();
 
-  let result_1 = mailer.send(email.into());
-  assert!(result_1.is_ok());
+  let result = mailer.send(email.into());
+  assert!(result.is_ok());
   // Explicitly close the SMTP transaction as we enabled connection reuse
   mailer.close();
 }
@@ -89,21 +89,51 @@ fn send_mail(html: &str) {
 fn do_weekly_job() {
   let html = fetch_book_html();
   let cleaned_html = clean_html(&html);
-  send_mail(&cleaned_html)
+  let config = read_config();
+  send_mail(&cleaned_html, config);
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MailAuthConfig {
+  user: String,
+  pass: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct MailConfig {
+  auth: MailAuthConfig,
+  to: String,
+}
+
+/// read `.env.json`
+/// ```{
+///   "auth": {
+///       "user": "xxx@qq.com",
+///       "pass": "xxxx"
+///   },
+///   "to": "xxx@qq.com"
+/// }```
+fn read_config() -> MailConfig {
+  let f = File::open(".env.json").unwrap();
+  let config: MailConfig = serde_json::from_reader(f).unwrap();
+  println!("{:?}", config);
+  return config;
+}
+
+#[allow(dead_code)]
+fn schedule_job() {
+  let mut scheduler = JobScheduler::new();
+  // 每周六 十点
+  scheduler.add(Job::new("00 00 10 * * SAT".parse().unwrap(), || {
+    println!("fetch this url {}", NEW_BOOK_URL);
+    do_weekly_job();
+  }));
+  loop {
+    scheduler.tick();
+    std::thread::sleep(Duration::from_millis(500));
+  }
 }
 
 fn main() {
-  let mut sched = JobScheduler::new();
-
-  sched.add(Job::new("1/10 * * * * *".parse().unwrap(), || {
-    // println!("I get executed every 10 seconds!");
-    println!("{}", NEW_BOOK_URL);
-    do_weekly_job();
-  }));
-
-  loop {
-    sched.tick();
-
-    std::thread::sleep(Duration::from_millis(500));
-  }
+  read_config();
 }
