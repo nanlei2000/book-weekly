@@ -123,16 +123,17 @@ fn read_config() -> MailConfig {
   return config;
 }
 
-fn append_to_html() -> String {
-  let mut html_file = File::open("index.html").unwrap();
+fn append_to_html(part: &str) -> String {
+  let mut html_file = File::open("./index.html").unwrap();
   let mut html: String = String::new();
   html_file.read_to_string(&mut html).unwrap();
-  println!("html : {}", html);
-  return html;
-  // const [head, tail] = html.split(SEP_TAG);
-  // const modifiedHtml = [head, str + tail].join(SEP_TAG + "\n");
-  // fs.writeFileSync(filePath, modifiedHtml);
-  // return modifiedHtml;
+  // println!("html : {}", html);
+  let res: Vec<&str> = html.split(SEP_TAG).collect();
+  let mut new_html = res[0].to_owned();
+  new_html = new_html + SEP_TAG + "\n" + part + res[1];
+  let mut buffer = File::create("index.html").unwrap();
+  buffer.write(new_html.as_bytes()).unwrap();
+  return new_html;
 }
 
 #[allow(dead_code)]
@@ -151,5 +152,5 @@ fn schedule_job() {
 
 fn main() {
   read_config();
-  append_to_html();
+  append_to_html("测试");
 }
