@@ -15,9 +15,11 @@ use lettre_email::EmailBuilder;
 use regex::Regex;
 use scraper::{Html, Selector};
 use std::fs::File;
+use std::io::prelude::*;
 use std::time::Duration;
 
 const NEW_BOOK_URL: &str = "https://book.douban.com/latest?icn=index-latestbook-all";
+const SEP_TAG: &str = "<!-- SEP-1511151742953336 -->";
 
 fn fetch_book_html() -> String {
   let agent = ureq::Agent::new();
@@ -49,6 +51,7 @@ fn clean_html(html: &str) -> String {
   mail_html += "</html>";
   return mail_html;
 }
+
 // TODO: use this regexp: <a class="cover"[^*]+?<\/a>
 fn remove_img_tag(html: String) -> String {
   let re = Regex::new(r"<img").unwrap();
@@ -120,6 +123,18 @@ fn read_config() -> MailConfig {
   return config;
 }
 
+fn append_to_html() -> String {
+  let mut html_file = File::open("index.html").unwrap();
+  let mut html: String = String::new();
+  html_file.read_to_string(&mut html).unwrap();
+  println!("html : {}", html);
+  return html;
+  // const [head, tail] = html.split(SEP_TAG);
+  // const modifiedHtml = [head, str + tail].join(SEP_TAG + "\n");
+  // fs.writeFileSync(filePath, modifiedHtml);
+  // return modifiedHtml;
+}
+
 #[allow(dead_code)]
 fn schedule_job() {
   let mut scheduler = JobScheduler::new();
@@ -136,4 +151,5 @@ fn schedule_job() {
 
 fn main() {
   read_config();
+  append_to_html();
 }
