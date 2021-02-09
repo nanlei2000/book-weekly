@@ -41,21 +41,21 @@ fn clean_html(html: &str) -> String {
   mail_html += "<h1>虚构类</h1><hr/>";
   let mut selector = Selector::parse("#content > div > div.article > ul").unwrap();
   for element in document.select(&selector) {
-    mail_html += &remove_img_tag(element.html().to_string());
+    mail_html += &remove_img_tag(&element.html());
   }
   mail_html += "<h1>非虚构类</h1><hr/>";
   selector = Selector::parse("#content > div > div.aside > ul").unwrap();
   for element in document.select(&selector) {
-    mail_html += &remove_img_tag(element.html().to_string());
+    mail_html += &remove_img_tag(&element.html());
   }
   mail_html += "</html>";
   return mail_html;
 }
 
 // TODO: use this regexp: <a class="cover"[^*]+?<\/a>
-fn remove_img_tag(html: String) -> String {
+fn remove_img_tag(html: &str) -> String {
   let re = Regex::new(r"<img").unwrap();
-  let result = re.replace_all(&html, "<disableimg").to_owned().to_string();
+  let result = re.replace_all(&html, "<disableimg").to_string();
   return result;
 }
 
@@ -127,7 +127,6 @@ fn append_to_html(part: &str) -> String {
   let mut html_file = File::open("./index.html").unwrap();
   let mut html: String = String::new();
   html_file.read_to_string(&mut html).unwrap();
-  // println!("html : {}", html);
   let res: Vec<&str> = html.split(SEP_TAG).collect();
   let mut new_html = res[0].to_owned();
   new_html = new_html + SEP_TAG + "\n" + part + res[1];
