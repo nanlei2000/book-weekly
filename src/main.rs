@@ -130,27 +130,12 @@ fn append_to_html(part: &str) -> String {
 }
 
 // commit html then the online website will refresh
+// sh ./script/commit_change.sh
 fn commit_changes() {
-  let mut git = Command::new("git");
-  let mut output = git.args(&["pull", "origin", "master"]).output().unwrap();
-  println!("status: {}", output.status);
-  io::stdout().write_all(&output.stdout).unwrap();
-  io::stderr().write_all(&output.stderr).unwrap();
-  assert!(output.status.success());
-  output = git.args(&["add", "."]).output().unwrap();
-  println!("status: {}", output.status);
-  io::stdout().write_all(&output.stdout).unwrap();
-  io::stderr().write_all(&output.stderr).unwrap();
-  assert!(output.status.success());
-  output = git
-    .args(&["commit", "-m", "'html change'"])
+  let output = Command::new("sh")
+    .args(&["./script/commit_change.sh", "html_change"])
     .output()
     .unwrap();
-  println!("status: {}", output.status);
-  io::stdout().write_all(&output.stdout).unwrap();
-  io::stderr().write_all(&output.stderr).unwrap();
-  assert!(output.status.success());
-  output = git.args(&["push", "origin", "master"]).output().unwrap();
   println!("status: {}", output.status);
   io::stdout().write_all(&output.stdout).unwrap();
   io::stderr().write_all(&output.stderr).unwrap();
