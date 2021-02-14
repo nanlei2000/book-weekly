@@ -1,0 +1,4 @@
+{
+  "name": "book-weekly",
+  "script": "target/release/book-weekly"
+}

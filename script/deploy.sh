@@ -5,4 +5,4 @@ cargo test test_read_config -- --nocapture
 # 编译可执行文件
 cargo build --release
 # 运行后台服务
-pm2 restart target/release/book-weekly
+pm2 startOrRestart process.json
