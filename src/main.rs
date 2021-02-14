@@ -16,6 +16,7 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use std::fs::File;
 use std::io::prelude::*;
+use std::io::{self, Write};
 use std::process::Command;
 use std::time::Duration;
 
@@ -131,13 +132,34 @@ fn append_to_html(part: &str) -> String {
 // commit html then the online website will refresh
 fn commit_changes() {
   let mut git = Command::new("git");
-  git.args(&["pull", "origin", "master"]).output().unwrap();
-  git.args(&["add", "."]).output().unwrap();
-  git
+  let mut output = git.args(&["pull", "origin", "master"]).output().unwrap();
+  println!("status: {}", output.status);
+  io::stdout().write_all(&output.stdout).unwrap();
+  io::stderr().write_all(&output.stderr).unwrap();
+  assert!(output.status.success());
+  output = git.args(&["add", "."]).output().unwrap();
+  println!("status: {}", output.status);
+  io::stdout().write_all(&output.stdout).unwrap();
+  io::stderr().write_all(&output.stderr).unwrap();
+  assert!(output.status.success());
+  output = git
     .args(&["commit", "-m", "'html change'"])
     .output()
     .unwrap();
-  git.args(&["push", "origin", "master"]).output().unwrap();
+  println!("status: {}", output.status);
+  io::stdout().write_all(&output.stdout).unwrap();
+  io::stderr().write_all(&output.stderr).unwrap();
+  assert!(output.status.success());
+  output = git.args(&["push", "origin", "master"]).output().unwrap();
+  println!("status: {}", output.status);
+  io::stdout().write_all(&output.stdout).unwrap();
+  io::stderr().write_all(&output.stderr).unwrap();
+  assert!(output.status.success());
+}
+
+#[test]
+fn test_commit_changes() {
+  commit_changes()
 }
 
 fn do_weekly_job() {
