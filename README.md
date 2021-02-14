@@ -11,6 +11,13 @@ cargo build --release
 pm2 start target/release/book-weekly
 ```
 
+### 开发
+
+```sh
+# 对单个函数测试
+cargo test <func_name> -- --nocapture
+```
+
 ### 相关阅读
 
 - 选择 http client 库： https://blog.logrocket.com/the-state-of-rust-http-clients/

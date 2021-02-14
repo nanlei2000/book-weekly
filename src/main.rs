@@ -114,6 +114,15 @@ fn read_config() -> MailConfig {
   let f = File::open(".env.json").unwrap();
   let config: MailConfig = serde_json::from_reader(f).unwrap();
   println!("{:?}", config);
+  assert!(
+    config.auth.user.len() > 0,
+    "`auth.user` is empty in `.env.json`"
+  );
+  assert!(
+    config.auth.pass.len() > 0,
+    "`auth.pass` is empty in `.env.json`"
+  );
+  assert!(config.to.len() > 0, "`to` is empty in `.env.json`");
   return config;
 }
 
@@ -142,11 +151,6 @@ fn commit_changes() {
   assert!(output.status.success());
 }
 
-#[test]
-fn test_commit_changes() {
-  commit_changes()
-}
-
 fn do_weekly_job() {
   let html = fetch_book_html();
   let cleaned_html = clean_html(&html);
@@ -166,6 +170,19 @@ fn schedule_job() {
   loop {
     scheduler.tick();
     std::thread::sleep(Duration::from_millis(500));
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn test_commit_changes() {
+    commit_changes();
+  }
+  #[test]
+  fn test_read_config() {
+    read_config();
   }
 }
 
