@@ -18,3 +18,4 @@ pm2 start target/release/book-weekly
 - https://mirrors.segmentfault.com/rust/README_3.html
 - https://www.ixiqin.com/2019/02/macos-installation-rust-development-environment/
 - https://doc.rust-lang.org/std/process/struct.Command.html
+- shell 传递参数： https://www.runoob.com/linux/linux-shell-passing-arguments.html
