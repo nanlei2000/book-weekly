@@ -1,3 +1,5 @@
+set -xe
+
 # 测试是否配置好 .env.json
 cargo test test_read_config -- --nocapture
 # 编译可执行文件
