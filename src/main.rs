@@ -16,6 +16,7 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use std::fs::File;
 use std::io::prelude::*;
+use std::process::Command;
 use std::time::Duration;
 
 const NEW_BOOK_URL: &str = "https://book.douban.com/latest?icn=index-latestbook-all";
@@ -31,7 +32,6 @@ fn fetch_book_html() -> String {
     .unwrap();
   assert_eq!(resp.status(), 200);
   let html = resp.into_string().unwrap();
-  // println!("{:?}", html);
   return html;
 }
 
@@ -89,13 +89,6 @@ fn send_mail(html: &str, config: MailConfig) {
   mailer.close();
 }
 
-fn do_weekly_job() {
-  let html = fetch_book_html();
-  let cleaned_html = clean_html(&html);
-  let config = read_config();
-  send_mail(&cleaned_html, config);
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct MailAuthConfig {
   user: String,
@@ -135,12 +128,32 @@ fn append_to_html(part: &str) -> String {
   return new_html;
 }
 
-#[allow(dead_code)]
+// commit html then the online website will refresh
+fn commit_changes() {
+  let mut git = Command::new("git");
+  git.args(&["pull", "origin", "master"]).output().unwrap();
+  git.args(&["add", "."]).output().unwrap();
+  git
+    .args(&["commit", "-m", "'html change'"])
+    .output()
+    .unwrap();
+  git.args(&["push", "origin", "master"]).output().unwrap();
+}
+
+fn do_weekly_job() {
+  let html = fetch_book_html();
+  let cleaned_html = clean_html(&html);
+  let config = read_config();
+  send_mail(&cleaned_html, config);
+  append_to_html(&cleaned_html);
+  commit_changes();
+}
+
 fn schedule_job() {
   let mut scheduler = JobScheduler::new();
   // 每周六 十点
   scheduler.add(Job::new("00 00 10 * * SAT".parse().unwrap(), || {
-    println!("fetch this url {}", NEW_BOOK_URL);
+    println!("fetch this url: {}", NEW_BOOK_URL);
     do_weekly_job();
   }));
   loop {
@@ -150,6 +163,5 @@ fn schedule_job() {
 }
 
 fn main() {
-  read_config();
-  append_to_html("测试");
+  schedule_job();
 }
