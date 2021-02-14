@@ -163,7 +163,8 @@ fn do_weekly_job() {
 fn schedule_job() {
   let mut scheduler = JobScheduler::new();
   // 每周六 十点
-  scheduler.add(Job::new("00 00 10 * * SAT".parse().unwrap(), || {
+  // scheduler.add(Job::new("00 00 10 * * SAT".parse().unwrap(), || {
+  scheduler.add(Job::new("00 00 10 * * *".parse().unwrap(), || {
     println!("fetch this url: {}", NEW_BOOK_URL);
     do_weekly_job();
   }));
@@ -183,6 +184,17 @@ mod tests {
   #[test]
   fn test_read_config() {
     read_config();
+  }
+  #[test]
+  fn test_scheduler() {
+    let mut scheduler = JobScheduler::new();
+    scheduler.add(Job::new("00 2 23 * * *".parse().unwrap(), || {
+      println!("fetch this url: {}", NEW_BOOK_URL);
+    }));
+    loop {
+      scheduler.tick();
+      std::thread::sleep(Duration::from_millis(500));
+    }
   }
 }
 
