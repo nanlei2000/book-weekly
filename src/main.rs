@@ -32,8 +32,7 @@ fn fetch_book_html() -> String {
     .call()
     .unwrap();
   assert_eq!(resp.status(), 200);
-  let html = resp.into_string().unwrap();
-  return html;
+  resp.into_string().unwrap()
 }
 
 fn clean_html(html: &str) -> String {
@@ -50,14 +49,13 @@ fn clean_html(html: &str) -> String {
     mail_html += &remove_img_tag(&element.html());
   }
   mail_html += "</html>";
-  return mail_html;
+  mail_html
 }
 
 // TODO: use this regexp: <a class="cover"[^*]+?<\/a>
 fn remove_img_tag(html: &str) -> String {
   let re = Regex::new(r"<img").unwrap();
-  let result = re.replace_all(&html, "<disableimg").to_string();
-  return result;
+  re.replace_all(&html, "<disableimg").to_string()
 }
 
 fn send_mail(html: &str, config: MailConfig) {
@@ -115,15 +113,15 @@ fn read_config() -> MailConfig {
   let config: MailConfig = serde_json::from_reader(f).unwrap();
   println!("{:?}", config);
   assert!(
-    config.auth.user.len() > 0,
+    !config.auth.user.is_empty(),
     "`auth.user` is empty in `.env.json`"
   );
   assert!(
-    config.auth.pass.len() > 0,
+    !config.auth.pass.is_empty(),
     "`auth.pass` is empty in `.env.json`"
   );
-  assert!(config.to.len() > 0, "`to` is empty in `.env.json`");
-  return config;
+  assert!(!config.to.is_empty(), "`to` is empty in `.env.json`");
+  config
 }
 
 fn append_to_html(part: &str) -> String {
@@ -134,8 +132,8 @@ fn append_to_html(part: &str) -> String {
   let mut new_html = res[0].to_owned();
   new_html = new_html + SEP_TAG + "\n" + part + res[1];
   let mut buffer = File::create("index.html").unwrap();
-  buffer.write(new_html.as_bytes()).unwrap();
-  return new_html;
+  buffer.write_all(new_html.as_bytes()).unwrap();
+  new_html
 }
 
 // commit html then the online website will refresh
